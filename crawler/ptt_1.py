@@ -1,63 +1,57 @@
 import requests
 from bs4 import BeautifulSoup
 import time
-import json
+import csv
+from datetime import datetime
 
 BASE_URL = "https://pttweb.tw"
 BOARD = "stock"
-PAGE_LIMIT = 10
+PAGE_LIMIT = 10  # 最多抓幾頁文章
 
 def get_page_url(page_num):
-    # 假設第 1 頁是 BASE_URL/stock/
-    # 接下來的頁面可能是 /stock/page/2、或 indexX、要依照實際觀察
-    # 這裡示範猜測 "/stock/page/{page}"
     if page_num == 1:
         return f"{BASE_URL}/{BOARD}/"
     else:
         return f"{BASE_URL}/{BOARD}/page/{page_num}/"
 
 def parse_article_list(page_url):
-    resp = requests.get(page_url)
+    resp = requests.get(page_url, timeout=10)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
     articles = []
-    # 以下 selector 依照該頁 HTML 結構來定
-    # 假設文章在 <div class="title"> <a href="...">標題</a> ... </div>
     for title_div in soup.select("div.title"):
         a = title_div.find("a")
         if a:
-            article = {
+            articles.append({
                 "title": a.get_text().strip(),
                 "url": BASE_URL + a["href"]
-            }
-            articles.append(article)
+            })
     return articles
 
 def parse_article(article_url):
-    resp = requests.get(article_url)
+    resp = requests.get(article_url, timeout=10)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    # 取標題（應該和列表頁標題相符）
-    title = soup.find("h1").get_text().strip() if soup.find("h1") else ""
+    # 標題
+    title_tag = soup.find("h1")
+    title = title_tag.get_text().strip() if title_tag else ""
 
-    # 取內文（排除推文、作者時間那部分）
-    content_div = soup.find("div", class_="content")  # 注意要依實際 class name 修改
+    # 內容
+    content_div = soup.find("div", class_="content")
     content = ""
     if content_div:
-        # 去掉推文／meta 資訊
-        for meta in content_div.find_all(["div", "span"], class_="meta"):
+        # 移除 meta 資訊
+        for meta in content_div.select("div.article-metaline, div.article-metaline-right, span.push-tag, span.push-userid, span.push-content, span.push-ipdatetime"):
             meta.decompose()
         content = content_div.get_text().strip()
 
-    # 推噓數量、留言數
-    # 看 HTML 如何標示推噓；假設有標籤 class="push", class="boo", etc.
-    push = len(soup.select("div.push"))  # 推文數
-    boo = len(soup.select("div.boo"))    # 噓文數
-    arrow = len(soup.select("div.arrow"))  # 箭頭／中性
-
-    # 留言總數可能是推 + 噓 + arrow，或者另有留言區
+    # 推文數
+    push_tags = soup.select("div.push span.push-tag")
+    push = sum(1 for tag in push_tags if tag.get_text().strip() == "推")
+    boo = sum(1 for tag in push_tags if tag.get_text().strip() == "噓")
+    arrow = sum(1 for tag in push_tags if tag.get_text().strip() == "→")
     total_messages = push + boo + arrow
 
     return {
@@ -89,22 +83,31 @@ def main():
                 continue
 
             record = {
+                "board": BOARD,
                 "url": art["url"],
                 "title": art_detail["title"],
                 "content": art_detail["content"],
                 "push": art_detail["push"],
                 "boo": art_detail["boo"],
                 "arrow": art_detail["arrow"],
-                "messages_count": art_detail["messages_count"]
+                "messages_count": art_detail["messages_count"],
+                "crawl_time": datetime.now().isoformat()
             }
             results.append(record)
-            time.sleep(1)  # 睡 1 秒避免太快
+            time.sleep(1)  # 每篇文章睡 1 秒
 
-        time.sleep(2)  # 分頁間隔
+        time.sleep(2)  # 每頁睡 2 秒
 
-    # 儲存成 JSON
-    with open("stock_pttweb_articles.json", "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+    # 儲存成 CSV
+    csv_file = f"{BOARD}_pttweb_articles.csv"
+    fieldnames = ["board", "url", "title", "content", "push", "boo", "arrow", "messages_count", "crawl_time"]
+    with open(csv_file, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in results:
+            writer.writerow(row)
+
+    print(f"Saved {len(results)} articles to {csv_file}")
 
 if __name__ == "__main__":
     main()
