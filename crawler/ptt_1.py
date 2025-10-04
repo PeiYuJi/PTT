@@ -4,7 +4,7 @@ import time
 import csv
 from datetime import datetime
 
-BASE_URL = "https://pttweb.tw"
+BASE_URL = "https://www.ptt.cc/bbs/Stock/index.html"
 BOARD = "stock"
 PAGE_LIMIT = 10  # 最多抓幾頁文章
 
