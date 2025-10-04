@@ -9,3 +9,4 @@ pipenv install pandas
 pipenv run python crawler/ptt.py
 pipenv run python crawler/ptt_1.py
 pipenv run python crawler/ptt_2.py
+pipenv run python crawler/ptt_3.py
