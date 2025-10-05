@@ -78,7 +78,8 @@ for _ in range(PAGE_LIMIT):
                 '內文': content,
                 '推文數量': push_count,
                 '噓文數量': boo_count,
-                '箭頭數量': arrow_count
+                '箭頭數量': arrow_count,               
+                '文章連結': link  # 新增欄位
             })
     
             time.sleep(0.3)  # 避免太快被擋
