@@ -9,26 +9,23 @@ headers = {
     'cookie': 'over18=1'
 }
 
-# PTT 股票版首頁
 base_url = 'https://www.ptt.cc/bbs/Stock/'
 
-# 儲存文章資料
 articles_list = []
 
-# 先抓取最新一頁的 index.html 以找出最末頁
+# 取得最新頁
 index = requests.get(base_url + 'index.html', headers=headers)
 soup = BeautifulSoup(index.text, 'html.parser')
 
-# 找到上一頁按鈕的連結，取得最大頁數
 btn_prev = soup.find('a', string='‹ 上頁')
 if btn_prev:
-    href = btn_prev['href']  # 例如 /bbs/Stock/index3770.html
+    href = btn_prev['href']
     last_page_index = int(href.split('index')[1].split('.html')[0]) + 1
 else:
     last_page_index = 1
 
-# 抓取前10頁文章
-for page_num in range(last_page_index, last_page_index - 5, -1):
+# 抓取前10頁
+for page_num in range(last_page_index, last_page_index - 2, -1):
     page_url = f'{base_url}index{page_num}.html' if page_num != last_page_index else base_url + 'index.html'
     print(f'抓取 {page_url}')
     
@@ -40,7 +37,7 @@ for page_num in range(last_page_index, last_page_index - 5, -1):
     for article in articles:
         title_tag = article.find('div', class_='title').find('a')
         date_tag = article.find('div', class_='date')
-        
+        print(article)
         if title_tag:
             title = title_tag.text.strip()
             link = 'https://www.ptt.cc' + title_tag['href']
@@ -48,39 +45,26 @@ for page_num in range(last_page_index, last_page_index - 5, -1):
             
             # 進入文章頁面
             article_response = requests.get(link, headers=headers)
-            article_response.encoding = 'utf-8'  # ✅ 強制編碼
             article_soup = BeautifulSoup(article_response.text, 'html.parser')
-            
-            # 取得文章內文
+            # 取得文章內文（排除推文）
             main_content = article_soup.find('div', id='main-content')
             if main_content:
                 for push in main_content.find_all('div', class_='push'):
-                    push.extract()
+                    push.extract()  # 移除推文，留下純文章內容
                 content = main_content.text.strip()
             else:
                 content = '無內文'
             
-            # ✅ 取得推文、噓文、箭頭數量（含 debug）
-            push_count = 0
-            boo_count = 0
-            arrow_count = 0
+            # 計算推、噓、箭頭數量
+            comments = article_soup.select('div.push')    
+            push_count = sum(1 for c in comments if c.find('span', class_='push-tag').text.strip() == '推')
+            boo_count = sum(1 for c in comments if c.find('span', class_='push-tag').text.strip() == '噓')
+            arrow_count = sum(1 for c in comments if c.find('span', class_='push-tag').text.strip() == '→')
 
-            for tag in article_soup.find_all('span', class_='push-tag'):
-                text = tag.text.strip()
-                print(repr(tag.text.strip()))
-                print("DEBUG:", repr(text))  # 看抓到的文字
-                if text == '推':
-                    push_count += 1
-                elif text == '噓':
-                    boo_count += 1
-                elif text == '→':
-                    arrow_count += 1
-            
-            # 計算推噓比 & 總留言數
             score = push_count - boo_count
             total_comments = push_count + boo_count + arrow_count
             
-            # 儲存資料
+            # 整理到字典
             articles_list.append({
                 '標題': title,
                 '時間': date,
@@ -93,15 +77,11 @@ for page_num in range(last_page_index, last_page_index - 5, -1):
                 '連結': link
             })
     
-    # 每頁抓取間隔，避免被封鎖
-    time.sleep(1)
+    time.sleep(1)  # 避免被擋
 
-# 轉成 DataFrame
+# 存成 DataFrame
 df = pd.DataFrame(articles_list)
-
-# 顯示前5筆
-print(df.head())
-
-# 存成 CSV
 df.to_csv('ptt_stock_10pages.csv', index=False, encoding='utf-8-sig')
+
 print(f'資料已儲存為 ptt_stock_10pages.csv，共 {len(df)} 筆文章')
+print(df.head())

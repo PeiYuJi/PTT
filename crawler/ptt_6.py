@@ -28,7 +28,7 @@ else:
     last_page_index = 1
 
 # 抓取前10頁文章
-for page_num in range(last_page_index, last_page_index - 5, -1):
+for page_num in range(last_page_index, last_page_index - 10, -1):
     page_url = f'{base_url}index{page_num}.html' if page_num != last_page_index else base_url + 'index.html'
     print(f'抓取 {page_url}')
     
@@ -48,7 +48,6 @@ for page_num in range(last_page_index, last_page_index - 5, -1):
             
             # 進入文章頁面
             article_response = requests.get(link, headers=headers)
-            article_response.encoding = 'utf-8'  # ✅ 強制編碼
             article_soup = BeautifulSoup(article_response.text, 'html.parser')
             
             # 取得文章內文
@@ -60,22 +59,28 @@ for page_num in range(last_page_index, last_page_index - 5, -1):
             else:
                 content = '無內文'
             
-            # ✅ 取得推文、噓文、箭頭數量（含 debug）
+            # ✅ 取得推文、噓文、箭頭數量（抓含 push-tag 的所有 span）
             push_count = 0
             boo_count = 0
             arrow_count = 0
-
-            for tag in article_soup.find_all('span', class_='push-tag'):
-                text = tag.text.strip()
-                print(repr(tag.text.strip()))
-                print("DEBUG:", repr(text))  # 看抓到的文字
+#            for tag in article_soup.find_all('span', class_=lambda x: x and 'push-tag' in x):
+#                text = tag.text.strip()
+#                if text.startswith('推'):
+#                    push_count += 1
+#                elif text.startswith('噓'):
+#                    boo_count += 1
+#                elif text.startswith('→'):
+#                    arrow_count += 1
+            
+            for tag in article_soup.find_all('span', class_=lambda x: x and 'hl push-tag' in x):
+                text = tag.text.replace('\xa0','').strip()  # 清理空格與特殊空白
                 if text == '推':
                     push_count += 1
                 elif text == '噓':
                     boo_count += 1
                 elif text == '→':
-                    arrow_count += 1
-            
+                    arrow_count += 1           
+
             # 計算推噓比 & 總留言數
             score = push_count - boo_count
             total_comments = push_count + boo_count + arrow_count
