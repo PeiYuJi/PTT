@@ -15,9 +15,9 @@ base_url = 'https://www.ptt.cc/bbs/Stock/'
 # 儲存文章資料
 articles_list = []
 
-# 先抓取最新一頁的 index.html 以找出最末頁 index
-response = requests.get(base_url + 'index.html', headers=headers)
-soup = BeautifulSoup(response.text, 'html.parser')
+# 先抓取最新一頁的 index.html 以找出最末頁
+index = requests.get(base_url + 'index.html', headers=headers)
+soup = BeautifulSoup(index.text, 'html.parser')
 
 # 找到上一頁按鈕的連結，取得最大頁數
 btn_prev = soup.find('a', string='‹ 上頁')
@@ -53,18 +53,21 @@ for page_num in range(last_page_index, last_page_index - 10, -1):
             # 取得文章內文
             main_content = article_soup.find('div', id='main-content')
             if main_content:
-                # 去掉推文內容
                 for push in main_content.find_all('div', class_='push'):
                     push.extract()
                 content = main_content.text.strip()
             else:
                 content = '無內文'
             
-            # 取得推文與噓文數量
-            #push_count = len(article_soup.find_all('span', class_='push-tag', text='推'))
-            #boo_count = len(article_soup.find_all('span', class_='push-tag', text='噓'))
-            push_count = sum(1 for tag in article_soup.find_all('span', class_='push-tag') if tag.text.strip() == '推')
-            boo_count  = sum(1 for tag in article_soup.find_all('span', class_='push-tag') if tag.text.strip() == '噓')
+            # ✅ 取得推文、噓文、箭頭數量（修正 strip 空白）
+            push_count  = sum(1 for tag in article_soup.find_all('span', class_='push-tag') if tag.text.strip() == '推')
+            boo_count   = sum(1 for tag in article_soup.find_all('span', class_='push-tag') if tag.text.strip() == '噓')
+            arrow_count = sum(1 for tag in article_soup.find_all('span', class_='push-tag') if tag.text.strip() == '→')
+            
+            # 計算推噓比 & 總留言數
+            score = push_count - boo_count
+            total_comments = push_count + boo_count + arrow_count
+            
             # 儲存資料
             articles_list.append({
                 '標題': title,
@@ -72,6 +75,9 @@ for page_num in range(last_page_index, last_page_index - 10, -1):
                 '內文': content,
                 '推文數量': push_count,
                 '噓文數量': boo_count,
+                '箭頭數量': arrow_count,
+                '總留言數': total_comments,
+                '推噓比': score,
                 '連結': link
             })
     
@@ -84,6 +90,6 @@ df = pd.DataFrame(articles_list)
 # 顯示前5筆
 print(df.head())
 
-# 如果想存 CSV
+# 存成 CSV
 df.to_csv('ptt_stock_10pages.csv', index=False, encoding='utf-8-sig')
 print(f'資料已儲存為 ptt_stock_10pages.csv，共 {len(df)} 筆文章')
