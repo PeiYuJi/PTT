@@ -8,15 +8,4 @@ pipenv install requests
 pipenv install pandas
 
 # 執行程式
-pipenv run python crawler/ptt.py
-pipenv run python crawler/ptt_1.py
-pipenv run python crawler/ptt_2.py
-pipenv run python crawler/ptt_3.py
-pipenv run python crawler/ptt_4.py
-pipenv run python crawler/ptt_5.py
-pipenv run python crawler/ptt_6.py
-pipenv run python crawler/ptt_7.py
-pipenv run python crawler/ptt_8.py
-pipenv run python crawler/ptt_9.py
-
-pipenv run python crawler/ptt_10.py
+pipenv run python crawler/PTT.py

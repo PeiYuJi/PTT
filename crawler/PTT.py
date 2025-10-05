@@ -11,7 +11,7 @@ headers = {
 
 BASE_URL = "https://www.ptt.cc"
 BOARD = "Stock"
-PAGE_LIMIT = 3  # 要抓取前幾頁文章，可修改
+PAGE_LIMIT = 10  # 要抓取前幾頁文章，可修改
 
 data = []
 
