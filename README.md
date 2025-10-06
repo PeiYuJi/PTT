@@ -15,6 +15,3 @@
 
     pipenv run python crawler/ptt.py
     pipenv run python crawler/analysis.py
-    pipenv run python crawler/analysis_1.py    
-    pipenv run python crawler/analysis_2.py
-    pipenv run python crawler/analysis_3.py
