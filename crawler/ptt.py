@@ -3,6 +3,13 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import time
 
+
+import os
+
+# 存到 crawler_ptt/output/ 資料夾
+output_dir = "crawler_ptt/output"
+os.makedirs(output_dir, exist_ok=True)  # 若資料夾不存在就建立
+
 # 設定 headers，模擬瀏覽器
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
@@ -93,7 +100,8 @@ for _ in range(PAGE_LIMIT):
     else:
         break
 
-# 存成 CSV
+# 存 CSV
+output_path = os.path.join(output_dir, "ptt_stock_articles.csv")
 df = pd.DataFrame(data)
-df.to_csv('ptt_stock_articles.csv', index=False, encoding='utf-8-sig')
-print("已存成 ptt_stock_articles.csv")
+df.to_csv(output_path, index=False, encoding="utf-8-sig")
+print(f"✅ 已存成 {output_path}")
