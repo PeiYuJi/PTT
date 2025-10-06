@@ -7,6 +7,9 @@ name = "pypi"
 beautifulsoup4 = "*"
 requests = "*"
 pandas = "*"
+matplotlib = "*"
+wordcloud = "*"
+jieba = "*"
 
 [dev-packages]
 
