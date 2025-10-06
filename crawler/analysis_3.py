@@ -14,7 +14,7 @@ rcParams["font.sans-serif"] = [font_path]
 rcParams["axes.unicode_minus"] = False  # 正確顯示負號
 
 # ===== 讀取資料 =====
-df = pd.read_csv("ptt_stock_articles.csv")
+df = pd.read_csv("output/ptt_stock_articles.csv")
 
 # ===== 基礎統計 =====
 df["互動總數"] = df["推文數量"] + df["噓文數量"] + df["箭頭數量"]

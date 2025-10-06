@@ -8,9 +8,13 @@
     pipenv install pandas
     pipenv install matplotlib wordcloud jieba
 
+    sudo apt update
+    sudo apt install fonts-noto-cjk
+
 # 執行程式
 
     pipenv run python crawler/ptt.py
     pipenv run python crawler/analysis.py
     pipenv run python crawler/analysis_1.py    
     pipenv run python crawler/analysis_2.py
+    pipenv run python crawler/analysis_3.py

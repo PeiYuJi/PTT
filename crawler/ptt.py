@@ -2,12 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
-
-
 import os
 
-# 存到 crawler_ptt/output/ 資料夾
-output_dir = "crawler_ptt/output"
+# 存到 output/ 資料夾
+output_dir = "output"
 os.makedirs(output_dir, exist_ok=True)  # 若資料夾不存在就建立
 
 # 設定 headers，模擬瀏覽器
